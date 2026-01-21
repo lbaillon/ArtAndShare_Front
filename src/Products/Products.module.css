@@ -43,7 +43,7 @@
 }
 
 .catalogueMenu {
-  border: solid 1px black;
+  border: solid 2px black;
   width: 100%;
   height: 6%;
   display: flex;
@@ -58,12 +58,36 @@
 }
 
 .filterContainer{
-  background-color: aqua;
   width: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: solid black 2px;
 }
+
+.filterButton{
+  margin-top: 5%;
+  width: 75%;
+  text-align: left;
+  border: solid 2px gray;
+  border-radius: 50px;
+
+}
+
 .productsContainer{
-  background-color: rgb(243, 206, 162);
   width: 80%;
+  overflow: scroll;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.productImage{
+  object-fit: cover;
+  width: 20%;
+  height: auto;
+  margin : 5%;
+  box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.5);
 }
 
 .classBy {
@@ -73,3 +97,4 @@
 .display{
   padding-left: 10px;
 }
+
