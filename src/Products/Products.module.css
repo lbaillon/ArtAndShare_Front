@@ -47,7 +47,7 @@
   width: 100%;
   height: 6%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 
@@ -85,16 +85,19 @@
 .productImage{
   object-fit: cover;
   width: 20%;
-  height: auto;
+  height: 60%;
   margin : 5%;
   box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.5);
 }
 
-.classBy {
-  padding-right: 10px;
+
+.activeFilters{
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.display{
-  padding-left: 10px;
+.tags{
+  margin-top: 5px;
 }
-

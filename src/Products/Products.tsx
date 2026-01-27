@@ -4,8 +4,14 @@ import { useEffect, useState } from "react";
 import Header from "../Header/Header";
 import styles from "./Products.module.css";
 import type { MenuProps } from "antd";
-import { Button, Dropdown, Empty, Slider } from "antd";
+import { Button, Dropdown, Empty, Slider, Tag } from "antd";
 import { DownOutlined } from "@ant-design/icons";
+import type { SliderRangeProps } from "antd/es/slider";
+
+type Artist = {
+    id: number;
+    name: string;
+};
 
 type Product = {
     id: number;
@@ -16,24 +22,30 @@ type Product = {
     value: number;
     purchaseOption: boolean;
     available: boolean;
+    artist: Artist;
 };
 
-type Artist = {
-    id: number;
-    name: string;
+type Filters = {
+    availability?: "available" | "unavailable";
+    artistId?: string;
+    theme?: string;
+    type?: string;
+    buyable?: "buyable" | "unbuyable";
+    priceRange?: [number, number];
 };
 
 function Products() {
     const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [productsData, setProductsData] = useState<Product[]>([]);
     const [artistList, setArtistList] = useState<Artist[]>([]);
+    const [filters, setFilters] = useState<Filters>({});
 
     useEffect(() => {
         fetch("http://localhost:9000/products")
             .then((response) => response.json())
             .then((data) => {
                 setProductsData(data);
-                setAllProducts(data)
+                setAllProducts(data);
             });
 
         fetch("http://localhost:9000/artists")
@@ -58,15 +70,42 @@ function Products() {
         }
     });
 
-    // const filterTable = [
-    //     "disponibilité",
-    //     "artiste",
-    //     "thème",
-    //     "type d'oeuvre",
-    //     "valeur de l'oeuvre",
-    //     "possibilité d'achat",
-    //     "tarif de location",
-    // ];
+    const applyFilters = (filters: Filters) => {
+        const filtered = allProducts.filter((product) => {
+            if (filters.availability === "available" && !product.available)
+                return false;
+
+            if (filters.availability === "unavailable" && product.available)
+                return false;
+
+            if (filters.buyable === "buyable" && !product.purchaseOption)
+                return false;
+
+            if (filters.buyable === "unbuyable" && product.purchaseOption)
+                return false;
+
+            if (
+                filters.artistId &&
+                product.artist.id.toString() !== filters.artistId
+            )
+                return false;
+
+            if (filters.theme && product.theme !== filters.theme) return false;
+
+            if (filters.type && product.type !== filters.type) return false;
+
+            if (
+                filters.priceRange &&
+                (product.value < filters.priceRange[0] ||
+                    product.value > filters.priceRange[1])
+            )
+                return false;
+
+            return true;
+        });
+
+        setProductsData(filtered);
+    };
 
     const availability: MenuProps["items"] = [
         {
@@ -80,16 +119,13 @@ function Products() {
     ];
 
     const availabilityClick: MenuProps["onClick"] = (e) => {
-        const filteredProducts = allProducts.filter((product) => {
-            if (e.key === "available") {
-                return product.available;
-            }
-            if (e.key === "unavailable") {
-                return !product.available;
-            }
-        });
+        const newFilters = {
+            ...filters,
+            availability: e.key as Filters["availability"],
+        };
 
-        setProductsData(filteredProducts);
+        setFilters(newFilters);
+        applyFilters(newFilters);
     };
 
     const availabilityProps = {
@@ -103,7 +139,13 @@ function Products() {
     }));
 
     const artistClick: MenuProps["onClick"] = (e) => {
-        console.log("artiste cliqué", e);
+        const newFilters = {
+            ...filters,
+            artistId: e.key,
+        };
+
+        setFilters(newFilters);
+        applyFilters(newFilters);
     };
 
     const artistProps = {
@@ -111,7 +153,7 @@ function Products() {
         onClick: artistClick,
     };
 
-    const themeFilter: MenuProps["items"] = productsData
+    const themeFilter: MenuProps["items"] = allProducts
         .reduce((accumulator: string[], product) => {
             if (!accumulator.includes(product.theme)) {
                 accumulator.push(product.theme);
@@ -124,7 +166,13 @@ function Products() {
         }));
 
     const themeClick: MenuProps["onClick"] = (e) => {
-        console.log("thème cliqué", e);
+        const newFilters = {
+            ...filters,
+            theme: e.key,
+        };
+
+        setFilters(newFilters);
+        applyFilters(newFilters);
     };
 
     const themeProps = {
@@ -132,7 +180,7 @@ function Products() {
         onClick: themeClick,
     };
 
-    const typeFilter: MenuProps["items"] = productsData
+    const typeFilter: MenuProps["items"] = allProducts
         .reduce((accumulator: string[], product) => {
             if (!accumulator.includes(product.type)) {
                 accumulator.push(product.type);
@@ -145,7 +193,13 @@ function Products() {
         }));
 
     const typeClick: MenuProps["onClick"] = (e) => {
-        console.log("type cliqué", e);
+        const newFilters = {
+            ...filters,
+            type: e.key,
+        };
+
+        setFilters(newFilters);
+        applyFilters(newFilters);
     };
 
     const typeProps = {
@@ -165,7 +219,13 @@ function Products() {
     ];
 
     const buyableClick: MenuProps["onClick"] = (e) => {
-        console.log("dipo à l'achat ?", e);
+        const newFilters = {
+            ...filters,
+            buyable: e.key as Filters["buyable"],
+        };
+
+        setFilters(newFilters);
+        applyFilters(newFilters);
     };
 
     const buyableProps = {
@@ -173,25 +233,35 @@ function Products() {
         onClick: buyableClick,
     };
 
-    const maxValue: number = productsData.reduce(
+    const maxValue: number = allProducts.reduce(
         (accumulator: number, product) => {
             if (accumulator < product.value) {
                 accumulator = product.value;
             }
             return accumulator;
         },
-        0
+        0,
     );
 
-    const minValue: number = productsData.reduce(
+    const minValue: number = allProducts.reduce(
         (accumulator: number, product) => {
             if (accumulator > product.value) {
                 accumulator = product.value;
             }
             return accumulator;
         },
-        maxValue
+        maxValue,
     );
+
+    const [priceRange, setPriceRange] = useState<[number, number]>([
+        minValue,
+        maxValue,
+    ]);
+    const onPriceChange: SliderRangeProps["onChange"] = (value) => {
+        if (value.length === 2) {
+            setPriceRange([value[0], value[1]]);
+        }
+    };
 
     const priceFilter: MenuProps["items"] = [
         {
@@ -201,19 +271,45 @@ function Products() {
                     max={maxValue}
                     min={minValue}
                     defaultValue={[minValue, maxValue]}
+                    onChange={onPriceChange}
                 />
             ),
-            key: "1",
+            key: "priceFilter",
         },
     ];
 
-    const priceClick: MenuProps["onClick"] = (e) => {
-        console.log("prix choisi", e);
+    const priceClick: MenuProps["onClick"] = () => {
+        const newFilters = {
+            ...filters,
+            priceRange,
+        };
+
+        setFilters(newFilters);
+        applyFilters(newFilters);
+        setPriceRange([minValue, maxValue]);
     };
 
     const priceProps = {
         items: priceFilter,
         onClick: priceClick,
+    };
+
+    const filterLabels = {
+        availability: (value: Filters["availability"]) =>
+            value === "available" ? "Disponible" : "Non disponible",
+
+        buyable: (value: Filters["buyable"]) =>
+            value === "buyable" ? "Achat possible" : "Indisponible à l'achat",
+
+        theme: (value: string) => value,
+        type: (value: string) => value,
+
+        artistId: (value: string) =>
+            artistList.find((a) => a.id.toString() === value)?.name ??
+            "Artiste",
+
+        priceRange: (value: [number, number]) =>
+            `Prix : ${value[0]} € – ${value[1]} €`,
     };
 
     return (
@@ -224,11 +320,9 @@ function Products() {
             <div className={styles.container}>
                 <div className={styles.menuTitle}>Catalogue</div>
                 <div className={styles.catalogueMenu}>
-                    <div className={styles.display}>display</div>
                     <div className={styles.productNumber}>
                         {products.length} produits
                     </div>
-                    <div className={styles.classBy}>trier part</div>
                 </div>
                 <div className={styles.filterAndProductContainer}>
                     <div className={styles.filterContainer}>
@@ -238,7 +332,7 @@ function Products() {
                                 iconPlacement="end"
                                 className={styles.filterButton}
                             >
-                                disponibilité
+                                Disponibilité
                             </Button>
                         </Dropdown>
                         <Dropdown menu={artistProps}>
@@ -247,7 +341,7 @@ function Products() {
                                 iconPlacement="end"
                                 className={styles.filterButton}
                             >
-                                artistes
+                                Artistes
                             </Button>
                         </Dropdown>
                         <Dropdown menu={themeProps}>
@@ -286,6 +380,34 @@ function Products() {
                                 Valeur de l'oeuvre
                             </Button>
                         </Dropdown>
+                        <div className={styles.activeFilters}>
+                            {Object.entries(filters).map(([key, value]) => {
+                                if (!value) return null;
+
+                                const labelFn =
+                                    filterLabels[key as keyof Filters];
+
+                                if (!labelFn) return null;
+
+                                return (
+                                    <Tag
+                                        key={key}
+                                        closable
+                                        onClose={() => {
+                                            const newFilters = { ...filters };
+                                            delete newFilters[
+                                                key as keyof Filters
+                                            ];
+                                            setFilters(newFilters);
+                                            applyFilters(newFilters);
+                                        }}
+                                        className={styles.tags}
+                                    >
+                                        {labelFn(value as never)}
+                                    </Tag>
+                                );
+                            })}
+                        </div>
                     </div>
                     <div className={styles.productsContainer}>{products}</div>
                 </div>
