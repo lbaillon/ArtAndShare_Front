@@ -7,6 +7,8 @@ import type { MenuProps } from "antd";
 import { Button, Dropdown, Empty, Slider, Tag } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import type { SliderRangeProps } from "antd/es/slider";
+import { useNavigate } from "react-router-dom";
+
 
 type Artist = {
     id: number;
@@ -35,6 +37,8 @@ type Filters = {
 };
 
 function Products() {
+    const navigate = useNavigate()
+
     const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [productsData, setProductsData] = useState<Product[]>([]);
     const [artistList, setArtistList] = useState<Artist[]>([]);
@@ -55,6 +59,9 @@ function Products() {
             });
     }, []);
 
+    function goToProductDetail(id: number) {
+        navigate(`/products/${id}`)
+    }
     const products = productsData.map((data) => {
         if (productsData.length === 0) {
             return <Empty description="Aucun produit trouvé" />;
@@ -65,6 +72,7 @@ function Products() {
                     className={styles.productImage}
                     alt={data.title}
                     src={data.photos[0]}
+                    onClick={()=>goToProductDetail(data.id)}
                 ></img>
             );
         }
